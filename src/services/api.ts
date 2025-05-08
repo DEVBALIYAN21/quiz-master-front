@@ -1,4 +1,3 @@
-
 import { 
   AuthResponse, 
   CreateQuizRequest, 
@@ -56,13 +55,30 @@ export const authAPI = {
 // Quiz APIs
 export const quizAPI = {
   createQuiz: async (data: CreateQuizRequest): Promise<QuizWithQuestions> => {
+    // Get the user from localStorage to include the userId in the request
+    const userJSON = localStorage.getItem("user");
+    if (!userJSON) {
+      throw new Error("User not found in localStorage");
+    }
+    
+    const user = JSON.parse(userJSON);
+    
+    // Clone the data object and add the hostedBy field to the quiz
+    const requestData = {
+      ...data,
+      quiz: {
+        ...data.quiz,
+        hostedBy: user.id,
+      },
+    };
+    
     const response = await fetch(`${API_BASE_URL}/quizzes`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         ...getAuthHeader(),
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify(requestData),
     });
     return handleResponse<QuizWithQuestions>(response);
   },

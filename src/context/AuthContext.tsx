@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { User } from "@/types";
 import { authAPI } from "@/services/api";
@@ -28,12 +27,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const storedUser = localStorage.getItem("user");
     
     if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
+      try {
+        setToken(storedToken);
+        const parsedUser = JSON.parse(storedUser);
+        // Ensure the user object has an id
+        if (!parsedUser.id) {
+          console.error("User object in localStorage is missing id", parsedUser);
+          toast({
+            variant: "destructive",
+            title: "Authentication Error",
+            description: "User data is invalid. Please log in again.",
+          });
+          // Clear invalid data
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+        } else {
+          setUser(parsedUser);
+        }
+      } catch (error) {
+        console.error("Error parsing user data from localStorage", error);
+        // Clear corrupted data
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        toast({
+          variant: "destructive",
+          title: "Authentication Error",
+          description: "Failed to restore your session. Please log in again.",
+        });
+      }
     }
     
     setIsLoading(false);
-  }, []);
+  }, [toast]);
 
   const login = async (email: string, password: string) => {
     try {

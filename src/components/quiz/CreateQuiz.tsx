@@ -132,6 +132,7 @@ const CreateQuiz: React.FC = () => {
           category: data.category,
           difficulty: data.difficulty,
           timeLimit: data.timeLimit,
+          // Note: hostedBy will be added in the API service
         },
         questions: data.questions.map((question) => ({
           questionText: question.questionText,
@@ -151,8 +152,12 @@ const CreateQuiz: React.FC = () => {
       });
       
     } catch (error) {
+      console.error("Error creating quiz:", error);
+      
       toast.error("Failed to create quiz", {
-        description: error instanceof Error ? error.message : "An unknown error occurred",
+        description: error instanceof Error 
+          ? error.message 
+          : "An unknown error occurred. Please check your connection and try again.",
       });
     } finally {
       setIsSubmitting(false);
