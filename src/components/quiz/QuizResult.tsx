@@ -20,24 +20,26 @@ const QuizResult: React.FC = () => {
   // Get quiz results from local storage
   useEffect(() => {
     if (!quizCode) return;
-
-    const savedResult = localStorage.getItem(`quiz_result_${quizCode}`);
-    
+  
+    const savedResult = localStorage.getItem(`quiz_result`);
+    console.log("Saved Result:", savedResult); // Verify data from localStorage
+  
     if (savedResult) {
       try {
-        const result = JSON.parse(savedResult) as QuizResultType;
-        
-        // Fetch quiz details to generate detailed results
+        const result = JSON.parse(savedResult);
+        console.log("Parsed Result:", result); // Check parsed result
+  
         const fetchQuizDetails = async () => {
           try {
             const quizData = await quizAPI.getQuiz(quizCode);
+            console.log("Quiz Data:", quizData); // Check quiz data
             const detailedResult = generateDetailedResult(result, quizData);
             setDetailedResult(detailedResult);
           } catch (error) {
             toast.error("Failed to load quiz details");
           }
         };
-        
+  
         fetchQuizDetails();
       } catch (error) {
         toast.error("Failed to load quiz results");
@@ -47,6 +49,7 @@ const QuizResult: React.FC = () => {
       navigate("/dashboard");
     }
   }, [quizCode, navigate]);
+  
 
   // Get the leaderboard for the quiz
   const { data: leaderboard = [] } = useQuery({

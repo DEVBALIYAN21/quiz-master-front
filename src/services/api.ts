@@ -1,4 +1,3 @@
-
 import { 
   AuthResponse, 
   CreateQuizRequest, 
@@ -63,7 +62,8 @@ export const quizAPI = {
     }
     
     const user = JSON.parse(userJSON);
-    
+    console.log("User:", user); // Log user object to debug
+
     // Clone the data object and add the hostedBy field to the quiz
     const requestData = {
       ...data,
@@ -72,7 +72,8 @@ export const quizAPI = {
         hostedBy: user.id,
       },
     };
-    
+    console.log("Request Data:", requestData); // Log the request data before sending
+
     const response = await fetch(`${API_BASE_URL}/quizzes`, {
       method: "POST",
       headers: {
@@ -81,7 +82,11 @@ export const quizAPI = {
       },
       body: JSON.stringify(requestData),
     });
-    return handleResponse<QuizWithQuestions>(response);
+
+    const savedQuiz = await handleResponse<QuizWithQuestions>(response);
+    console.log("Saved Quiz:", savedQuiz); // Log the saved quiz response to debug
+
+    return savedQuiz;
   },
 
   getQuiz: async (quizCode: string): Promise<QuizWithQuestions> => {
@@ -160,10 +165,13 @@ export const userAPI = {
       const response = await fetch(`${API_BASE_URL}/users/stats`, {
         headers: getAuthHeader(),
       });
-      return handleResponse<UserStats>(response);
+      // Use handleResponse directly instead of reading the response twice
+      const data = await handleResponse<UserStats>(response);
+      console.log("User Stats from API:", data);  // Log the API response
+      return data;
     } catch (error) {
       console.error("Error fetching user stats:", error);
-      // Return a default UserStats object to prevent null/undefined errors
+      // Return default user stats on error
       return {
         totalQuizzesTaken: 0,
         totalQuizzesCreated: 0,
@@ -179,6 +187,7 @@ export const userAPI = {
     }
   },
 };
+
 
 // Generate detailed result with correct/incorrect answers
 export const generateDetailedResult = (

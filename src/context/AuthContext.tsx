@@ -20,43 +20,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-  
+
   useEffect(() => {
-    // Check for token in localStorage on mount
     const storedToken = localStorage.getItem("token");
     const storedUser = localStorage.getItem("user");
-    
+
     if (storedToken && storedUser) {
       try {
-        setToken(storedToken);
         const parsedUser = JSON.parse(storedUser);
-        // Ensure the user object has an id
         if (!parsedUser.id) {
-          console.error("User object in localStorage is missing id", parsedUser);
-          toast({
-            variant: "destructive",
-            title: "Authentication Error",
-            description: "User data is invalid. Please log in again.",
-          });
-          // Clear invalid data
-          localStorage.removeItem("token");
-          localStorage.removeItem("user");
-        } else {
-          setUser(parsedUser);
+          throw new Error("User object missing id");
         }
+
+        setToken(storedToken);
+        setUser(parsedUser);
       } catch (error) {
-        console.error("Error parsing user data from localStorage", error);
-        // Clear corrupted data
+        console.error("Error restoring session:", error);
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         toast({
           variant: "destructive",
           title: "Authentication Error",
-          description: "Failed to restore your session. Please log in again.",
+          description: "Failed to restore session. Please log in again.",
         });
       }
     }
-    
+
     setIsLoading(false);
   }, [toast]);
 
@@ -64,19 +53,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       setIsLoading(true);
       const response = await authAPI.login({ email, password });
-      
-      // Store auth data
+
+      // Ensure user and token are valid
+      if (!response.user.id || !response.token) {
+        throw new Error("Invalid user data received.");
+      }
+
       localStorage.setItem("token", response.token);
       localStorage.setItem("user", JSON.stringify(response.user));
-      
+
       setToken(response.token);
       setUser(response.user);
-      
+
       toast({
         title: "Login successful",
         description: `Welcome back, ${response.user.username}!`,
       });
     } catch (error) {
+      console.error("Login error:", error);
       toast({
         variant: "destructive",
         title: "Login failed",
@@ -92,19 +86,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       setIsLoading(true);
       const response = await authAPI.register({ username, email, password });
-      
-      // Store auth data
+
+      // Ensure user and token are valid
+      if (!response.user.id || !response.token) {
+        throw new Error("Invalid user data received.");
+      }
+
       localStorage.setItem("token", response.token);
       localStorage.setItem("user", JSON.stringify(response.user));
-      
+
       setToken(response.token);
       setUser(response.user);
-      
+
       toast({
         title: "Registration successful",
         description: `Welcome to Quiz Master, ${response.user.username}!`,
       });
     } catch (error) {
+      console.error("Registration error:", error);
       toast({
         variant: "destructive",
         title: "Registration failed",
@@ -121,7 +120,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.removeItem("user");
     setToken(null);
     setUser(null);
-    
+
     toast({
       title: "Logged out",
       description: "You have been logged out successfully",

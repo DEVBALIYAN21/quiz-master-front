@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -9,6 +8,20 @@ import { Plus, Search, User, LogOut } from "lucide-react";
 const Dashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    window.location.href = 'http://localhost:8081/';
+  };
+
+  if (user) {
+    console.log("User Stats:", {
+      quizzesTaken: user.quizzesTaken,
+      quizzesCreated: user.quizzesCreated,
+      highestScore: user.highestPercentage,
+      averageScore: user.averageScore,
+    });
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -26,7 +39,7 @@ const Dashboard = () => {
             </Button>
             <Button 
               variant="ghost" 
-              onClick={logout}
+              onClick={handleLogout}
               className="flex items-center gap-2"
             >
               <LogOut size={16} />

@@ -91,6 +91,7 @@ export interface DetailedResult extends QuizResult {
 
 // User stats
 export interface UserStats {
+  json: any;
   totalQuizzesTaken: number;
   totalQuizzesCreated: number;
   totalPoints: number;

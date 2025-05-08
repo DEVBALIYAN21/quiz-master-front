@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +19,7 @@ const UserProfile: React.FC = () => {
   const { user } = useAuth();
   const [stats, setStats] = useState<UserStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   useEffect(() => {
     const fetchUserStats = async () => {
@@ -27,10 +27,12 @@ const UserProfile: React.FC = () => {
       
       try {
         setIsLoading(true);
+        setError(null);
         const userStats = await userAPI.getUserStats();
         setStats(userStats);
       } catch (error) {
         console.error("Failed to load user stats:", error);
+        setError("Unable to load your statistics. Please try again later.");
       } finally {
         setIsLoading(false);
       }
@@ -39,7 +41,7 @@ const UserProfile: React.FC = () => {
     fetchUserStats();
   }, [user]);
   
-  if (isLoading || !stats) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
@@ -50,20 +52,57 @@ const UserProfile: React.FC = () => {
     );
   }
   
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-xl">Error Loading Profile</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-red-500">{error}</p>
+            <Button 
+              className="mt-4 w-full" 
+              onClick={() => window.location.reload()}
+            >
+              Try Again
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+  
+  if (!stats) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-xl">No Data Available</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>We couldn't find any quiz statistics for your profile.</p>
+            <Button className="mt-4">Take Your First Quiz</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+  
   // Format category data for the pie chart
-  const categoryData = Object.entries(stats.categoryBreakdown).map(([name, value]) => ({
+  const categoryData = Object.entries(stats.categoryBreakdown || {}).map(([name, value]) => ({
     name,
     value
   }));
   
   // Format score distribution data for the bar chart
-  const scoreData = Object.entries(stats.scoreDistribution).map(([range, count]) => ({
+  const scoreData = Object.entries(stats.scoreDistribution || {}).map(([range, count]) => ({
     range,
     count
   }));
   
   // Format recent results for the line chart
-  const recentResultsData = stats.recentResults.map((result, index) => ({
+  const recentResultsData = (stats.recentResults || []).map((result, index) => ({
     name: `Quiz ${index + 1}`,
     score: result.percentage
   })).slice(-10); // Only show last 10 entries
@@ -72,7 +111,7 @@ const UserProfile: React.FC = () => {
     <div className="container max-w-6xl mx-auto py-6 px-4">
       <Card className="mb-8">
         <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex items-center gap-4">
               <Avatar className="h-16 w-16 border-2 border-indigo-200">
                 <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${user?.username}`} alt={user?.username} />
@@ -87,7 +126,7 @@ const UserProfile: React.FC = () => {
                 <CardDescription>Your quiz statistics and performance</CardDescription>
               </div>
             </div>
-            <div className="text-right">
+            <div className="text-left md:text-right">
               <p className="text-sm text-gray-500">Member since</p>
               <p className="font-medium">{new Date().toLocaleDateString()}</p>
             </div>
@@ -95,7 +134,7 @@ const UserProfile: React.FC = () => {
         </CardHeader>
         
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <StatCard 
               title="Quizzes Taken" 
               value={stats.totalQuizzesTaken} 
@@ -260,7 +299,7 @@ const UserProfile: React.FC = () => {
               <CardDescription>Your quiz history</CardDescription>
             </CardHeader>
             <CardContent>
-              {stats.recentResults.length === 0 ? (
+              {!stats.recentResults || stats.recentResults.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                   <p>You haven't taken any quizzes yet</p>
                   <Button variant="link" className="mt-2">
@@ -270,7 +309,7 @@ const UserProfile: React.FC = () => {
               ) : (
                 <div className="space-y-4">
                   {stats.recentResults.map((result, index) => {
-                    const matchingQuiz = stats.recentQuizzes.find(q => q.id === result.quizId);
+                    const matchingQuiz = stats.recentQuizzes?.find(q => q.id === result.quizId);
                     return (
                       <div key={index} className="flex items-center justify-between border-b pb-4 last:border-0">
                         <div>
@@ -314,10 +353,10 @@ interface StatCardProps {
 
 const StatCard: React.FC<StatCardProps> = ({ title, value, description, color, icon }) => {
   return (
-    <div className={`rounded-lg border p-4 ${color}`}>
+    <div className={`rounded-lg border p-4 ${color} transition-all duration-300 hover:shadow-md`}>
       <div className="flex items-center justify-between mb-2">
         <p className="text-sm font-medium">{title}</p>
-        {icon && <span>{icon}</span>}
+        {icon && <span className="opacity-80">{icon}</span>}
       </div>
       <p className="text-2xl font-bold mt-1">{value}</p>
       <p className="text-xs mt-1 opacity-70">{description}</p>
