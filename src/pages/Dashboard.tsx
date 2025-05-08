@@ -1,98 +1,14 @@
 
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import AuthForm from "@/components/auth/AuthForm";
-
-const Index = () => {
-  const { isAuthenticated } = useAuth();
-
-  if (isAuthenticated) {
-    return <Dashboard />;
-  }
-
-  return <Landing />;
-};
-
-const Landing = () => {
-  return (
-    <div className="min-h-screen flex flex-col">
-      <header className="border-b py-4">
-        <div className="container mx-auto px-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-quiz-primary">Quiz Master</h1>
-        </div>
-      </header>
-
-      <main className="flex-grow">
-        <div className="container mx-auto px-4 py-12 flex flex-col-reverse md:flex-row items-center">
-          <div className="md:w-1/2 text-center md:text-left space-y-6">
-            <h2 className="text-4xl md:text-5xl font-bold leading-tight">
-              Create and Join <span className="text-quiz-primary">Interactive Quizzes</span> in Minutes
-            </h2>
-            <p className="text-lg text-gray-600 max-w-lg mx-auto md:mx-0">
-              Create challenging quizzes, share them with friends, and test your knowledge with our interactive quiz platform.
-            </p>
-          </div>
-
-          <div className="md:w-1/2 mb-10 md:mb-0">
-            <AuthForm />
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 py-16">
-          <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold text-center mb-12">How It Works</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <FeatureCard
-                number="1"
-                title="Create or Join"
-                description="Create your own quiz or join existing ones with a simple 6-character code."
-              />
-              <FeatureCard
-                number="2"
-                title="Take the Quiz"
-                description="Answer questions within the time limit and test your knowledge."
-              />
-              <FeatureCard
-                number="3"
-                title="Get Results"
-                description="Instantly see your results and check your ranking on the leaderboard."
-              />
-            </div>
-          </div>
-        </div>
-      </main>
-
-      <footer className="border-t py-6">
-        <div className="container mx-auto px-4 text-center text-sm text-gray-500">
-          <p>© {new Date().getFullYear()} Quiz Master. All rights reserved.</p>
-        </div>
-      </footer>
-    </div>
-  );
-};
-
-interface FeatureCardProps {
-  number: string;
-  title: string;
-  description: string;
-}
-
-const FeatureCard: React.FC<FeatureCardProps> = ({ number, title, description }) => (
-  <div className="flex flex-col items-center text-center">
-    <div className="w-12 h-12 bg-quiz-primary text-white rounded-full flex items-center justify-center text-xl font-bold mb-4">
-      {number}
-    </div>
-    <h3 className="text-xl font-bold mb-2">{title}</h3>
-    <p className="text-gray-600">{description}</p>
-  </div>
-);
+import { Plus, Search, User, LogOut } from "lucide-react";
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
-  const navigate = (path: string) => window.location.href = path;
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -103,13 +19,17 @@ const Dashboard = () => {
             <Button 
               variant="outline" 
               onClick={() => navigate("/profile")}
+              className="flex items-center gap-2"
             >
+              <User size={16} />
               {user?.username}
             </Button>
             <Button 
               variant="ghost" 
               onClick={logout}
+              className="flex items-center gap-2"
             >
+              <LogOut size={16} />
               Logout
             </Button>
           </div>
@@ -128,6 +48,7 @@ const Dashboard = () => {
               buttonAction={() => navigate("/create")}
               primaryColor="bg-quiz-primary"
               className="border-quiz-primary/20"
+              icon={<Plus size={20} />}
             />
             
             <DashboardCard
@@ -137,6 +58,7 @@ const Dashboard = () => {
               buttonAction={() => navigate("/join")}
               primaryColor="bg-quiz-secondary"
               className="border-quiz-secondary/20"
+              icon={<Search size={20} />}
             />
           </div>
 
@@ -148,7 +70,7 @@ const Dashboard = () => {
                   variant="link"
                   onClick={() => navigate("/profile")}
                 >
-                  View Profile
+                  View Full Profile
                 </Button>
               </div>
               
@@ -199,6 +121,7 @@ interface DashboardCardProps {
   buttonAction: () => void;
   primaryColor: string;
   className?: string;
+  icon?: React.ReactNode;
 }
 
 const DashboardCard: React.FC<DashboardCardProps> = ({ 
@@ -207,15 +130,17 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
   buttonText, 
   buttonAction,
   primaryColor,
-  className
+  className,
+  icon
 }) => (
   <Card className={`p-6 border-2 hover:shadow-lg transition-shadow ${className}`}>
     <h3 className="text-xl font-bold mb-2">{title}</h3>
     <p className="text-gray-600 mb-6">{description}</p>
     <Button 
       onClick={buttonAction}
-      className={`w-full ${primaryColor} hover:brightness-105`}
+      className={`w-full ${primaryColor} hover:brightness-105 flex items-center justify-center gap-2`}
     >
+      {icon}
       {buttonText}
     </Button>
   </Card>
@@ -235,4 +160,4 @@ const StatCard: React.FC<StatCardProps> = ({ label, value, bgColor, textColor })
   </div>
 );
 
-export default Index;
+export default Dashboard;
