@@ -11,7 +11,8 @@ import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
   Tooltip, ResponsiveContainer, LineChart, Line, Legend 
 } from "recharts";
-import { Book, BarChart as BarChartIcon } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Book, BarChart as BarChartIcon, UserRound, Award, GraduationCap, Settings } from "lucide-react";
 
 const COLORS = ["#6366F1", "#14B8A6", "#EC4899", "#F59E0B", "#10B981"];
 
@@ -42,7 +43,7 @@ const UserProfile: React.FC = () => {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-quiz-primary mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
           <p className="text-lg">Loading your profile...</p>
         </div>
       </div>
@@ -72,11 +73,19 @@ const UserProfile: React.FC = () => {
       <Card className="mb-8">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-2xl font-bold">
-                {user?.username}'s Profile
-              </CardTitle>
-              <CardDescription>Your quiz statistics and performance</CardDescription>
+            <div className="flex items-center gap-4">
+              <Avatar className="h-16 w-16 border-2 border-indigo-200">
+                <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${user?.username}`} alt={user?.username} />
+                <AvatarFallback className="bg-indigo-100 text-indigo-800 text-xl">
+                  {user?.username?.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <CardTitle className="text-2xl font-bold">
+                  {user?.username}'s Profile
+                </CardTitle>
+                <CardDescription>Your quiz statistics and performance</CardDescription>
+              </div>
             </div>
             <div className="text-right">
               <p className="text-sm text-gray-500">Member since</p>
@@ -92,24 +101,28 @@ const UserProfile: React.FC = () => {
               value={stats.totalQuizzesTaken} 
               description="Total quizzes attempted"
               color="bg-indigo-50 text-indigo-700 border-indigo-200"
+              icon={<Book className="h-4 w-4" />}
             />
             <StatCard 
               title="Quizzes Created" 
               value={stats.totalQuizzesCreated} 
               description="Total quizzes created"
               color="bg-teal-50 text-teal-700 border-teal-200"
+              icon={<GraduationCap className="h-4 w-4" />}
             />
             <StatCard 
               title="Highest Score" 
               value={`${stats.highestPercentage}%`} 
               description="Best performance"
               color="bg-pink-50 text-pink-700 border-pink-200"
+              icon={<Award className="h-4 w-4" />}
             />
             <StatCard 
               title="Average Score" 
               value={`${stats.averageScore.toFixed(1)}%`} 
               description="Overall performance"
               color="bg-amber-50 text-amber-700 border-amber-200"
+              icon={<BarChartIcon className="h-4 w-4" />}
             />
           </div>
         </CardContent>
@@ -296,12 +309,16 @@ interface StatCardProps {
   value: string | number;
   description: string;
   color: string;
+  icon?: React.ReactNode;
 }
 
-const StatCard: React.FC<StatCardProps> = ({ title, value, description, color }) => {
+const StatCard: React.FC<StatCardProps> = ({ title, value, description, color, icon }) => {
   return (
     <div className={`rounded-lg border p-4 ${color}`}>
-      <p className="text-sm font-medium">{title}</p>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-sm font-medium">{title}</p>
+        {icon && <span>{icon}</span>}
+      </div>
       <p className="text-2xl font-bold mt-1">{value}</p>
       <p className="text-xs mt-1 opacity-70">{description}</p>
     </div>
