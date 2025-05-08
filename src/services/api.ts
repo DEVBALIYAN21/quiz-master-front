@@ -1,3 +1,4 @@
+
 import { 
   AuthResponse, 
   CreateQuizRequest, 
@@ -103,35 +104,79 @@ export const quizAPI = {
   },
 
   searchQuizzes: async (params: SearchParams): Promise<SearchResponse> => {
-    const queryParams = new URLSearchParams();
-    
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined) {
-        queryParams.append(key, value.toString());
-      }
-    });
-    
-    const response = await fetch(`${API_BASE_URL}/quizzes?${queryParams.toString()}`, {
-      headers: getAuthHeader(),
-    });
-    return handleResponse<SearchResponse>(response);
+    try {
+      const queryParams = new URLSearchParams();
+      
+      // Only add valid parameters to the query
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          queryParams.append(key, value.toString());
+        }
+      });
+      
+      const response = await fetch(`${API_BASE_URL}/quizzes?${queryParams.toString()}`, {
+        headers: getAuthHeader(),
+      });
+      
+      const data = await handleResponse<SearchResponse>(response);
+      
+      // Ensure we return a valid SearchResponse even if the backend returns partial data
+      return {
+        quizzes: data.quizzes || [],
+        total: data.total || 0,
+        page: data.page || 1,
+        limit: data.limit || 10
+      };
+    } catch (error) {
+      console.error("Search quizzes error:", error);
+      // Return a default response on error to prevent null/undefined errors
+      return {
+        quizzes: [],
+        total: 0,
+        page: 1,
+        limit: 10
+      };
+    }
   },
 
   getLeaderboard: async (quizCode: string): Promise<LeaderboardEntry[]> => {
-    const response = await fetch(`${API_BASE_URL}/quizzes/${quizCode}/leaderboard`, {
-      headers: getAuthHeader(),
-    });
-    return handleResponse<LeaderboardEntry[]>(response);
+    try {
+      const response = await fetch(`${API_BASE_URL}/quizzes/${quizCode}/leaderboard`, {
+        headers: getAuthHeader(),
+      });
+      const data = await handleResponse<LeaderboardEntry[]>(response);
+      return data || []; // Return empty array if null/undefined
+    } catch (error) {
+      console.error("Error fetching leaderboard:", error);
+      return []; // Return empty array on error
+    }
   },
 };
 
 // User APIs
 export const userAPI = {
   getUserStats: async (): Promise<UserStats> => {
-    const response = await fetch(`${API_BASE_URL}/users/stats`, {
-      headers: getAuthHeader(),
-    });
-    return handleResponse<UserStats>(response);
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/stats`, {
+        headers: getAuthHeader(),
+      });
+      return handleResponse<UserStats>(response);
+    } catch (error) {
+      console.error("Error fetching user stats:", error);
+      // Return a default UserStats object to prevent null/undefined errors
+      return {
+        totalQuizzesTaken: 0,
+        totalQuizzesCreated: 0,
+        totalPoints: 0,
+        averageScore: 0,
+        highestScore: 0,
+        highestPercentage: 0,
+        recentResults: [],
+        recentQuizzes: [],
+        categoryBreakdown: {},
+        scoreDistribution: {}
+      };
+    }
   },
 };
 
@@ -140,9 +185,32 @@ export const generateDetailedResult = (
   result: QuizResult,
   quiz: QuizWithQuestions
 ): DetailedResult => {
+  if (!result || !quiz || !result.answers || !quiz.questions) {
+    console.error("Invalid data for generateDetailedResult", { result, quiz });
+    // Return a minimal valid DetailedResult to prevent errors
+    return {
+      userId: result?.userId || "",
+      quizId: result?.quizId || "",
+      score: result?.score || 0,
+      totalScore: result?.totalScore || 0,
+      percentage: result?.percentage || 0,
+      answers: result?.answers || [],
+      quiz: quiz?.quiz || { 
+        title: "Unknown Quiz", 
+        description: "Quiz data unavailable", 
+        isPublic: false, 
+        category: "Unknown", 
+        difficulty: "Medium", 
+        timeLimit: 0 
+      },
+      questions: quiz?.questions || [],
+      answeredCorrectly: []
+    };
+  }
+
   const answeredCorrectly = result.answers.map((answerIndex, questionIndex) => {
     const question = quiz.questions[questionIndex];
-    return answerIndex === question.correctAnswerIndex;
+    return answerIndex === question?.correctAnswerIndex;
   });
 
   return {
