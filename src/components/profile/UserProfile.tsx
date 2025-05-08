@@ -158,7 +158,7 @@ const UserProfile: React.FC = () => {
             />
             <StatCard 
               title="Average Score" 
-              value={`${stats.averageScore.toFixed(1)}%`} 
+              value={`${stats.averageScore.toFixed(1)}`} 
               description="Overall performance"
               color="bg-amber-50 text-amber-700 border-amber-200"
               icon={<BarChartIcon className="h-4 w-4" />}

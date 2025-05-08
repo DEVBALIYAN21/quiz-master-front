@@ -1,27 +1,35 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { userAPI } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Plus, Search, User, LogOut } from "lucide-react";
+import { UserStats } from "@/types";
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [stats, setStats] = useState<UserStats | null>(null);
 
   const handleLogout = async () => {
     await logout();
     window.location.href = 'http://localhost:8081/';
   };
 
-  if (user) {
-    console.log("User Stats:", {
-      quizzesTaken: user.quizzesTaken,
-      quizzesCreated: user.quizzesCreated,
-      highestScore: user.highestPercentage,
-      averageScore: user.averageScore,
-    });
-  }
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (!user) return;
+      try {
+        const userStats = await userAPI.getUserStats();
+        setStats(userStats);
+      } catch (error) {
+        console.error("Failed to fetch user stats:", error);
+      }
+    };
+
+    fetchStats();
+  }, [user]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -75,7 +83,7 @@ const Dashboard = () => {
             />
           </div>
 
-          {user && (
+          {stats && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <h3 className="text-xl font-bold">Your Statistics</h3>
@@ -90,25 +98,25 @@ const Dashboard = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                 <StatCard 
                   label="Quizzes Taken" 
-                  value={user.quizzesTaken.toString()} 
+                  value={stats.totalQuizzesTaken.toString()} 
                   bgColor="bg-indigo-50"
                   textColor="text-indigo-700"
                 />
                 <StatCard 
                   label="Quizzes Created" 
-                  value={user.quizzesCreated.toString()} 
+                  value={stats.totalQuizzesCreated.toString()} 
                   bgColor="bg-teal-50"
                   textColor="text-teal-700"
                 />
                 <StatCard 
                   label="Highest Score" 
-                  value={`${user.highestPercentage}%`} 
+                  value={`${stats.highestPercentage}%`} 
                   bgColor="bg-pink-50"
                   textColor="text-pink-700"
                 />
                 <StatCard 
                   label="Average Score" 
-                  value={`${user.averageScore}%`} 
+                  value={`${stats.averageScore.toFixed(1)}`} 
                   bgColor="bg-amber-50"
                   textColor="text-amber-700"
                 />

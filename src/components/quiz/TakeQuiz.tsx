@@ -1,9 +1,7 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, ArrowRight, Timer, Check } from "lucide-react";
@@ -24,10 +22,8 @@ const TakeQuiz: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(0);
   
-  // Timer ref for cleanup
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Get quiz data
   useEffect(() => {
     const fetchQuiz = async () => {
       if (!quizCode) return;
@@ -55,14 +51,12 @@ const TakeQuiz: React.FC = () => {
     fetchQuiz();
   }, [quizCode, navigate]);
   
-  // Handle timer
   useEffect(() => {
     if (!quiz || timeRemaining <= 0) return;
     
     timerRef.current = setInterval(() => {
       setTimeRemaining((prev) => {
         if (prev <= 1) {
-          // Auto-submit when time runs out
           clearInterval(timerRef.current!);
           handleSubmitQuiz();
           return 0;
@@ -103,7 +97,6 @@ const TakeQuiz: React.FC = () => {
   const handleSubmitQuiz = async () => {
     if (!quiz || !user) return;
     
-    // Show confirmation if not all questions are answered
     const unansweredCount = selectedAnswers.filter(ans => ans === -1).length;
     if (unansweredCount > 0 && timeRemaining > 0) {
       const confirmed = window.confirm(
@@ -123,19 +116,20 @@ const TakeQuiz: React.FC = () => {
         quizId: quiz.quiz.id!,
         answers: finalAnswers
       };
+
+      console.log("Submitting answers:", submission); // Debug log
       
       const result = await quizAPI.submitQuiz(submission);
+      console.log("Quiz submission result:", result); // Debug log
+      
+      // Store the result in localStorage
+      localStorage.setItem('quiz_result', JSON.stringify(result));
       
       // Clear the timer
       if (timerRef.current) clearInterval(timerRef.current);
       
       // Navigate to result page
-      navigate(`/results/${quiz.quiz.quizCode}`, { 
-        state: { 
-          result,
-          quiz
-        } 
-      });
+      navigate(`/results/${quiz.quiz.quizCode}`);
       
     } catch (error) {
       toast.error("Failed to submit quiz", {
