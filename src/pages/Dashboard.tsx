@@ -14,7 +14,7 @@ const Dashboard = () => {
 
   const handleLogout = async () => {
     await logout();
-    window.location.href = 'https://quizhoster.netlify.app/';
+    window.location.href = 'http://localhost:8081/';
   };
 
   useEffect(() => {
