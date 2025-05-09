@@ -55,16 +55,14 @@ export const authAPI = {
 // Quiz APIs
 export const quizAPI = {
   createQuiz: async (data: CreateQuizRequest): Promise<QuizWithQuestions> => {
-    // Get the user from localStorage to include the userId in the request
     const userJSON = localStorage.getItem("user");
     if (!userJSON) {
       throw new Error("User not found in localStorage");
     }
     
     const user = JSON.parse(userJSON);
-    console.log("User:", user); // Log user object to debug
+    console.log("User:", user);
 
-    // Clone the data object and add the hostedBy field to the quiz
     const requestData = {
       ...data,
       quiz: {
@@ -72,7 +70,7 @@ export const quizAPI = {
         hostedBy: user.id,
       },
     };
-    console.log("Request Data:", requestData); // Log the request data before sending
+    console.log("Request Data:", requestData);
 
     const response = await fetch(`${API_BASE_URL}/quizzes`, {
       method: "POST",
@@ -84,7 +82,7 @@ export const quizAPI = {
     });
 
     const savedQuiz = await handleResponse<QuizWithQuestions>(response);
-    console.log("Saved Quiz:", savedQuiz); // Log the saved quiz response to debug
+    console.log("Saved Quiz:", savedQuiz);
 
     return savedQuiz;
   },
@@ -94,6 +92,20 @@ export const quizAPI = {
       headers: getAuthHeader(),
     });
     return handleResponse<QuizWithQuestions>(response);
+  },
+
+  getQuizDetails: async (quizCode: string): Promise<any> => {
+    const response = await fetch(`${API_BASE_URL}/quizzes/${quizCode}/details`, {
+      headers: getAuthHeader(),
+    });
+    return handleResponse(response);
+  },
+
+  getUserQuizzes: async (): Promise<any> => {
+    const response = await fetch(`${API_BASE_URL}/users/quizzes`, {
+      headers: getAuthHeader(),
+    });
+    return handleResponse(response);
   },
 
   submitQuiz: async (data: QuizSubmission): Promise<QuizResult> => {
@@ -112,7 +124,6 @@ export const quizAPI = {
     try {
       const queryParams = new URLSearchParams();
       
-      // Only add valid parameters to the query
       Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== '') {
           queryParams.append(key, value.toString());
@@ -125,7 +136,6 @@ export const quizAPI = {
       
       const data = await handleResponse<SearchResponse>(response);
       
-      // Ensure we return a valid SearchResponse even if the backend returns partial data
       return {
         quizzes: data.quizzes || [],
         total: data.total || 0,
@@ -134,7 +144,6 @@ export const quizAPI = {
       };
     } catch (error) {
       console.error("Search quizzes error:", error);
-      // Return a default response on error to prevent null/undefined errors
       return {
         quizzes: [],
         total: 0,
@@ -150,10 +159,10 @@ export const quizAPI = {
         headers: getAuthHeader(),
       });
       const data = await handleResponse<LeaderboardEntry[]>(response);
-      return data || []; // Return empty array if null/undefined
+      return data || [];
     } catch (error) {
       console.error("Error fetching leaderboard:", error);
-      return []; // Return empty array on error
+      return [];
     }
   },
 };
@@ -165,13 +174,11 @@ export const userAPI = {
       const response = await fetch(`${API_BASE_URL}/users/stats`, {
         headers: getAuthHeader(),
       });
-      // Use handleResponse directly instead of reading the response twice
       const data = await handleResponse<UserStats>(response);
-      console.log("User Stats from API:", data);  // Log the API response
+      console.log("User Stats from API:", data);
       return data;
     } catch (error) {
       console.error("Error fetching user stats:", error);
-      // Return default user stats on error
       return {
         totalQuizzesTaken: 0,
         totalQuizzesCreated: 0,
@@ -188,7 +195,6 @@ export const userAPI = {
   },
 };
 
-
 // Generate detailed result with correct/incorrect answers
 export const generateDetailedResult = (
   result: QuizResult,
@@ -196,7 +202,6 @@ export const generateDetailedResult = (
 ): DetailedResult => {
   if (!result || !quiz || !result.answers || !quiz.questions) {
     console.error("Invalid data for generateDetailedResult", { result, quiz });
-    // Return a minimal valid DetailedResult to prevent errors
     return {
       userId: result?.userId || "",
       quizId: result?.quizId || "",
