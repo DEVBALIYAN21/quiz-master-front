@@ -108,6 +108,13 @@ export const quizAPI = {
     return handleResponse(response);
   },
 
+  getUserAttemptedQuizzes: async (): Promise<any> => {
+    const response = await fetch(`${API_BASE_URL}/users/attempted-quizzes`, {
+      headers: getAuthHeader(),
+    });
+    return handleResponse(response);
+  },
+
   submitQuiz: async (data: QuizSubmission): Promise<QuizResult> => {
     const response = await fetch(`${API_BASE_URL}/quizzes/submit`, {
       method: "POST",
@@ -193,6 +200,24 @@ export const userAPI = {
       };
     }
   },
+
+  getAttemptedQuizzes: async (): Promise<any> => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/attempted-quizzes`, {
+        headers: getAuthHeader(),
+      });
+      const data = await handleResponse<any>(response);
+      return data;
+    } catch (error) {
+      console.error("Error fetching attempted quizzes:", error);
+      return {
+        quizzes: [],
+        total: 0,
+        page: 1,
+        limit: 10
+      };
+    }
+  }
 };
 
 // Generate detailed result with correct/incorrect answers

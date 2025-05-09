@@ -1,20 +1,14 @@
+
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/context/AuthContext";
 import { userAPI } from "@/services/api";
-import { UserStats, QuizWithQuestions } from "@/types";
-import { 
-  PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
-  Tooltip, ResponsiveContainer, LineChart, Line, Legend 
-} from "recharts";
+import { UserStats } from "@/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Book, BarChart as BarChartIcon, UserRound, Award, GraduationCap, Settings, Users, Clock, Target } from "lucide-react";
-
-const COLORS = ["#6366F1", "#14B8A6", "#EC4899", "#F59E0B", "#10B981"];
+import { Book, Award, GraduationCap, Users, Clock, Target } from "lucide-react";
 
 const UserProfile: React.FC = () => {
   const { user } = useAuth();
@@ -22,10 +16,11 @@ const UserProfile: React.FC = () => {
   const [stats, setStats] = useState<UserStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [createdQuizzes, setCreatedQuizzes] = useState<any[]>([]);
+  const [attemptedQuizzes, setAttemptedQuizzes] = useState<any[]>([]);
   const [quizDetails, setQuizDetails] = useState<any>(null);
   
   useEffect(() => {
-    const fetchUserStats = async () => {
+    const fetchUserData = async () => {
       if (!user) return;
       
       try {
@@ -34,21 +29,30 @@ const UserProfile: React.FC = () => {
         setStats(userStats);
         
         // Fetch created quizzes
-        const response = await fetch(`http://localhost:8056/users/quizzes`, {
+        const createdResponse = await fetch(`http://localhost:8056/users/quizzes`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
         });
-        const data = await response.json();
-        setCreatedQuizzes(data.quizzes || []); // Access the quizzes array from the response
+        const createdData = await createdResponse.json();
+        setCreatedQuizzes(createdData.quizzes || []);
+        
+        // Fetch attempted quizzes
+        const attemptedResponse = await fetch(`http://localhost:8056/users/attempted-quizzes`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        });
+        const attemptedData = await attemptedResponse.json();
+        setAttemptedQuizzes(attemptedData.quizzes || []);
       } catch (error) {
-        console.error("Failed to load user stats:", error);
+        console.error("Failed to load user data:", error);
       } finally {
         setIsLoading(false);
       }
     };
     
-    fetchUserStats();
+    fetchUserData();
   }, [user]);
 
   const handleQuizClick = async (quizCode: string) => {
@@ -75,21 +79,6 @@ const UserProfile: React.FC = () => {
       </div>
     );
   }
-  
-  const categoryData = Object.entries(stats.categoryBreakdown || {}).map(([name, value]) => ({
-    name,
-    value
-  }));
-  
-  const scoreData = Object.entries(stats.scoreDistribution || {}).map(([range, count]) => ({
-    range,
-    count
-  }));
-  
-  const recentResultsData = (stats.recentResults || []).map((result, index) => ({
-    name: `Quiz ${index + 1}`,
-    score: result.percentage
-  })).slice(-10);
   
   return (
     <div className="container max-w-6xl mx-auto py-6 px-4">
@@ -145,131 +134,23 @@ const UserProfile: React.FC = () => {
               value={`${stats.averageScore.toFixed(1)}`} 
               description="Overall performance"
               color="bg-amber-50 text-amber-700 border-amber-200"
-              icon={<BarChartIcon className="h-4 w-4" />}
+              icon={<Book className="h-4 w-4" />}
             />
           </div>
         </CardContent>
       </Card>
       
       <Tabs defaultValue="created" className="mb-8">
-        <TabsList className="grid w-full grid-cols-3">
-          
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="created" className="flex gap-2">
             <GraduationCap className="h-4 w-4" />
             Created Quizzes
           </TabsTrigger>
-          
+          <TabsTrigger value="attempted" className="flex gap-2">
+            <Book className="h-4 w-4" />
+            Attempted Quizzes
+          </TabsTrigger>
         </TabsList>
-        
-        <TabsContent value="statistics" className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Quiz Categories</CardTitle>
-                <CardDescription>Distribution of quizzes by category</CardDescription>
-              </CardHeader>
-              <CardContent className="h-72">
-                {categoryData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={categoryData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {categoryData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="flex items-center justify-center h-full text-gray-500">
-                    No category data available
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Score Distribution</CardTitle>
-                <CardDescription>How your scores are distributed</CardDescription>
-              </CardHeader>
-              <CardContent className="h-72">
-                {scoreData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={scoreData}
-                      margin={{
-                        top: 5,
-                        right: 30,
-                        left: 20,
-                        bottom: 5,
-                      }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="range" />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="count" fill="#6366F1" name="Quizzes" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="flex items-center justify-center h-full text-gray-500">
-                    No score data available
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-            
-            <Card className="md:col-span-2">
-              <CardHeader>
-                <CardTitle className="text-lg">Performance Trend</CardTitle>
-                <CardDescription>Your recent quiz results</CardDescription>
-              </CardHeader>
-              <CardContent className="h-72">
-                {recentResultsData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart
-                      data={recentResultsData}
-                      margin={{
-                        top: 5,
-                        right: 30,
-                        left: 20,
-                        bottom: 5,
-                      }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis domain={[0, 100]} />
-                      <Tooltip />
-                      <Legend />
-                      <Line
-                        type="monotone"
-                        dataKey="score"
-                        stroke="#6366F1"
-                        activeDot={{ r: 8 }}
-                        name="Score (%)"
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="flex items-center justify-center h-full text-gray-500">
-                    No performance data available
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
 
         <TabsContent value="created" className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -413,50 +294,81 @@ const UserProfile: React.FC = () => {
           )}
         </TabsContent>
         
-        <TabsContent value="history" className="pt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Recent Quizzes</CardTitle>
-              <CardDescription>Your quiz history</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {!stats.recentResults || stats.recentResults.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <p>You haven't taken any quizzes yet</p>
-                  <Button variant="link" className="mt-2">
-                    Join a Quiz
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {stats.recentResults.map((result, index) => {
-                    const matchingQuiz = stats.recentQuizzes?.find(q => q.id === result.quizId);
-                    return (
-                      <div key={index} className="flex items-center justify-between border-b pb-4 last:border-0">
-                        <div>
-                          <h3 className="font-medium">
-                            {matchingQuiz?.title || "Unknown Quiz"}
-                          </h3>
-                          <p className="text-sm text-gray-500">
-                            {result.submittedAt ? new Date(result.submittedAt).toLocaleDateString() : "N/A"}
-                          </p>
-                          <p className="text-xs text-gray-400 mt-1">
-                            {matchingQuiz?.category || "Uncategorized"} · {matchingQuiz?.difficulty || "Unknown"} difficulty
-                          </p>
+        <TabsContent value="attempted" className="pt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {attemptedQuizzes.length === 0 ? (
+              <div className="col-span-2 text-center py-8">
+                <p className="text-gray-500 mb-4">You haven't attempted any quizzes yet</p>
+                <Button onClick={() => navigate('/explore')} className="bg-indigo-600 hover:bg-indigo-700">
+                  Explore Quizzes
+                </Button>
+              </div>
+            ) : (
+              attemptedQuizzes.map((quizData) => {
+                // Find this user's result for the quiz
+                const userResult = quizData.studentResults.find(
+                  (result: any) => result.userId === user?.id
+                );
+                
+                return (
+                  <Card key={quizData.quiz.id} className="hover:shadow-lg transition-shadow">
+                    <CardHeader>
+                      <CardTitle className="text-xl">{quizData.quiz.title}</CardTitle>
+                      <CardDescription>{quizData.quiz.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-gray-500" />
+                          <span className="text-sm text-gray-600">
+                            {quizData.quiz.timeLimit} minutes
+                          </span>
                         </div>
-                        <div className="text-right">
-                          <p className="font-bold text-lg">{result.percentage}%</p>
-                          <p className="text-sm">
-                            Score: {result.score}/{result.totalScore}
-                          </p>
+                        <div className="flex items-center gap-2">
+                          <Target className="h-4 w-4 text-gray-500" />
+                          <span className="text-sm text-gray-600">
+                            {quizData.quiz.difficulty}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Book className="h-4 w-4 text-gray-500" />
+                          <span className="text-sm text-gray-600">
+                            {quizData.quiz.category}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Award className="h-4 w-4 text-gray-500" />
+                          <span className="text-sm text-gray-600">
+                            Your Score: {userResult?.score}/{userResult?.totalScore} ({userResult?.percentage}%)
+                          </span>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                      
+                      <div className="mt-2 p-4 bg-gray-50 rounded-md">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600">
+                            Taken on: {new Date(userResult?.submittedAt).toLocaleDateString()}
+                          </span>
+                          <span className="text-sm text-gray-600">
+                            Questions: {quizData.questions.length}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-4 flex gap-2">
+                        <Button 
+                          className="w-full bg-indigo-600 hover:bg-indigo-700"
+                          onClick={() => navigate(`/quiz/${quizData.quiz.quizCode}`)}
+                        >
+                          Take Again
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })
+            )}
+          </div>
         </TabsContent>
       </Tabs>
     </div>
