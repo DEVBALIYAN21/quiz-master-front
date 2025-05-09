@@ -113,7 +113,7 @@ const QuizResult: React.FC = () => {
       <div className="flex items-center justify-between mb-6">
         <Button
           variant="ghost"
-          onClick={() => navigate("/dashboard")}
+          onClick={() => navigate("/")}
           className="flex items-center gap-2"
         >
           <ArrowLeft size={16} />
@@ -267,7 +267,7 @@ const QuizResult: React.FC = () => {
       <div className="mt-8 flex justify-center space-x-4">
         <Button 
           variant="outline" 
-          onClick={() => navigate("/dashboard")}
+          onClick={() => navigate("/")}
           className="flex items-center gap-2"
         >
           <ArrowLeft size={16} />
