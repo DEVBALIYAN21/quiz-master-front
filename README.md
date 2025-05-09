@@ -1,13 +1,12 @@
-# Online Quiz Platform Backend
+# Online Quiz Platform Frontend
 
-This is the backend for an online quiz platform developed by **Dev Baliyan**. It provides a RESTful API for user authentication, quiz creation, quiz submission, and quiz management, built with **Go**, **Gin**, and **MongoDB**. Users can register, create quizzes, attempt quizzes, view their statistics, and retrieve detailed results for quizzes they have hosted.
+This is the front-end for an online quiz platform developed by **Dev Baliyan**. It provides a user interface for users to register, log in, create quizzes, attempt quizzes, view leaderboards, and manage their quiz statistics. The front-end is built with **React**, **TypeScript**, **Vite**, **shadcn-ui**, and **Tailwind CSS**, and it connects to a Go-based backend API for data management.
 
 ## Table of Contents
 - [Features](#features)
 - [Tech Stack](#tech-stack)
 - [Setup Instructions](#setup-instructions)
 - [Environment Variables](#environment-variables)
-- [API Endpoints](#api-endpoints)
 - [Running the Application](#running-the-application)
 - [Editing the Code](#editing-the-code)
 - [Testing](#testing)
@@ -16,136 +15,64 @@ This is the backend for an online quiz platform developed by **Dev Baliyan**. It
 - [License](#license)
 
 ## Features
-- **User Authentication**: Register and login with JWT-based authentication.
-- **Quiz Management**: Create, retrieve, and manage quizzes with questions and answers.
-- **Quiz Submission**: Submit quiz answers and calculate scores with percentage.
-- **Quiz Details**: View detailed quiz results, including student performance, for quiz owners.
-- **User Statistics**: Track user performance with metrics like quizzes taken, average score, and highest score.
-- **Leaderboard**: View top performers for a specific quiz.
-- **Search Quizzes**: Search public quizzes by title, category, or difficulty.
-- **User Quizzes**: Retrieve all quizzes created by a user with detailed information.
-- **Pagination**: Support for paginated responses in search and user quizzes endpoints.
-- **CORS Support**: Configurable Cross-Origin Resource Sharing for front-end integration.
+- **User Authentication**: Register and log in with a clean, responsive interface.
+- **Quiz Creation**: Create quizzes with questions and answers, sent to the backend API.
+- **Quiz Taking**: Attempt quizzes with a timed interface and immediate feedback.
+- **Quiz Management**: View detailed results for quizzes you created, including student performance.
+- **User Dashboard**: Display user statistics like quizzes taken, created, and average scores.
+- **Leaderboard**: View top performers for each quiz.
+- **Quiz Search**: Search public quizzes by title, category, or difficulty.
+- **Responsive Design**: Mobile-friendly UI with Tailwind CSS and shadcn-ui components.
+- **Type Safety**: Built with TypeScript for robust type checking.
 
 ## Tech Stack
-- **Language**: Go (Golang)
-- **Web Framework**: Gin
-- **Database**: MongoDB
-- **Authentication**: JWT (JSON Web Tokens)
-- **Password Hashing**: bcrypt
-- **Environment Management**: godotenv
-- **CORS**: gin-contrib/cors
+- **Framework**: React
+- **Language**: TypeScript
+- **Build Tool**: Vite
+- **UI Components**: shadcn-ui
+- **Styling**: Tailwind CSS
+- **Package Manager**: npm
 
 ## Setup Instructions
 1. **Clone the Repository**:
    ```bash
    git clone <repository-url>
-   cd onlinequiz
+   cd quiz-platform-frontend
    ```
 
-2. **Install Go**:
-   Ensure Go (version 1.16 or later) is installed. Download from [golang.org](https://golang.org/dl/).
+2. **Install Node.js**:
+   Ensure Node.js (version 16 or later) and npm are installed. Install via [nvm](https://github.com/nvm-sh/nvm#installing-and-updating) or download from [nodejs.org](https://nodejs.org/).
 
-3. **Install MongoDB**:
-   Install MongoDB (Community Edition) and ensure it's running locally or on a remote server. Follow instructions at [mongodb.com](https://www.mongodb.com/docs/manual/installation/).
-
-4. **Install Dependencies**:
-   Run the following command to install required Go modules:
+3. **Install Dependencies**:
+   Run the following command to install required npm packages:
    ```bash
-   go mod tidy
+   npm install
    ```
 
-5. **Configure Environment Variables**:
+4. **Configure Environment Variables**:
    Create a `.env` file in the project root and add the following:
    ```env
-   MONGO_URI=mongodb://localhost:27017
-   DB_NAME=quizdb
-   JWT_SECRET=your_jwt_secret_key
-   ALLOWED_ORIGIN=http://localhost:3000
-   PORT=8056
+   VITE_API_URL=http://localhost:8056
    ```
-   - `MONGO_URI`: MongoDB connection string.
-   - `DB_NAME`: Name of the MongoDB database.
-   - `JWT_SECRET`: Secret key for JWT signing (use a strong, unique key).
-   - `ALLOWED_ORIGIN`: Allowed origin for CORS (e.g., front-end URL or `*` for all).
-   - `PORT`: Port for the API server (default: 8056).
+   - `VITE_API_URL`: URL of the backend API (default matches the Go backend's port).
 
-6. **Run MongoDB**:
-   Start your MongoDB server:
-   ```bash
-   mongod
-   ```
+5. **Ensure Backend is Running**:
+   The front-end requires the Go-based backend to be running. Follow the backend's setup instructions to start it (e.g., on `http://localhost:8056`).
 
 ## Environment Variables
 The application uses the following environment variables:
-| Variable         | Description                                      | Default       |
-|------------------|--------------------------------------------------|---------------|
-| `MONGO_URI`      | MongoDB connection string                       | -             |
-| `DB_NAME`        | MongoDB database name                           | -             |
-| `JWT_SECRET`     | Secret key for JWT authentication               | -             |
-| `ALLOWED_ORIGIN` | Allowed origin for CORS (e.g., front-end URL)   | -             |
-| `PORT`           | Port for the API server                         | `8056`        |
-
-## API Endpoints
-All endpoints are prefixed with `/`. Protected endpoints require a `Bearer` token in the `Authorization` header.
-
-### Authentication
-- **POST /register**
-  - Register a new user.
-  - Body: `{ "username": "string", "email": "string", "password": "string" }`
-  - Response: `201 Created` with user details and JWT token.
-
-- **POST /login**
-  - Login an existing user.
-  - Body: `{ "email": "string", "password": "string" }`
-  - Response: `200 OK` with user details and JWT token.
-
-### Quiz Management
-- **POST /quizzes** (Protected)
-  - Create a new quiz with questions.
-  - Body: `{ "quiz": { "title": "string", "description": "string", "isPublic": bool, "category": "string", "difficulty": "string", "timeLimit": int }, "questions": [{ "questionText": "string", "options": ["string"], "correctAnswerIndex": int, "explanationText": "string" }] }`
-  - Response: `201 Created` with quiz details and questions.
-
-- **GET /quizzes/:quizCode** (Protected)
-  - Retrieve a quiz by its code.
-  - Response: `200 OK` with quiz and questions.
-
-- **GET /quizzes/:quizCode/details** (Protected)
-  - Retrieve detailed results for a quiz (only for the quiz owner).
-  - Response: `200 OK` with quiz, questions, attempt count, average score, and student results.
-
-- **GET /users/quizzes** (Protected)
-  - Retrieve all quizzes created by the authenticated user with detailed information.
-  - Query Params: `limit` (default: 10), `page` (default: 1)
-  - Response: `200 OK` with a list of quiz details, total count, and pagination info.
-
-- **POST /quizzes/submit** (Protected)
-  - Submit answers for a quiz.
-  - Body: `{ "userId": "string", "quizId": "string", "answers": [int] }`
-  - Response: `200 OK` with quiz result (score, percentage, etc.).
-
-- **GET /quizzes** (Protected)
-  - Search public quizzes.
-  - Query Params: `q` (search query), `category`, `difficulty`, `sort_by`, `order`, `limit`, `page`
-  - Response: `200 OK` with a list of quizzes, total count, and pagination info.
-
-- **GET /quizzes/:quizCode/leaderboard** (Protected)
-  - Retrieve the leaderboard for a quiz.
-  - Response: `200 OK` with a list of top performers.
-
-### User Management
-- **GET /users/stats** (Protected)
-  - Retrieve statistics for the authenticated user.
-  - Response: `200 OK` with user stats (quizzes taken, created, scores, etc.).
+| Variable        | Description                          | Default                  |
+|-----------------|--------------------------------------|--------------------------|
+| `VITE_API_URL`  | URL of the backend API              | `http://localhost:8056`  |
 
 ## Running the Application
-1. Ensure MongoDB is running and the `.env` file is configured.
-2. Run the application:
+1. Ensure the backend API is running.
+2. Start the development server:
    ```bash
-   go run main.go
+   npm run dev
    ```
-3. The server will start on the specified port (default: `http://localhost:8056`).
-4. Test the API using tools like **Postman** or **curl**.
+3. Open your browser to `http://localhost:5173` (or the port shown in the terminal).
+4. The application will auto-reload on code changes.
 
 ## Editing the Code
 There are several ways to edit the application code:
@@ -154,13 +81,13 @@ There are several ways to edit the application code:
 1. Clone the repository:
    ```bash
    git clone <repository-url>
-   cd onlinequiz
+   cd quiz-platform-frontend
    ```
 2. Install dependencies:
    ```bash
-   go mod tidy
+   npm install
    ```
-3. Open the project in your IDE (e.g., VS Code, GoLand).
+3. Open the project in your IDE (e.g., VS Code, WebStorm).
 4. Make changes, test locally, and push to the repository:
    ```bash
    git add .
@@ -181,27 +108,28 @@ There are several ways to edit the application code:
 
 ## Testing
 To test the application:
-1. Use a tool like **Postman** or **curl** to send requests to the API endpoints.
-2. Write unit tests using Go's `testing` package or a framework like `testify`.
-3. Example test cases:
-   - Register a user and verify the JWT token.
-   - Create a quiz and retrieve it by quiz code.
-   - Submit quiz answers and check the calculated score.
-   - Verify quiz details are accessible only to the owner.
-   - Test pagination in `/users/quizzes` and `/quizzes`.
+1. Use a browser to interact with the UI and verify functionality (e.g., register, create a quiz, submit answers).
+2. Write unit tests using a framework like **Jest** or **Vitest** (if set up in the project).
+3. Test API integration by ensuring the front-end correctly communicates with the backend.
+4. Example test cases:
+   - Verify user registration and login.
+   - Ensure quiz creation submits data to the backend.
+   - Check that quiz results display correctly for owners.
+   - Test responsive design on mobile and desktop.
 
 ## Dependencies
-The application uses the following Go modules:
-- `github.com/dgrijalva/jwt-go`: For JWT authentication.
-- `github.com/gin-contrib/cors`: For CORS support.
-- `github.com/gin-gonic/gin`: Web framework.
-- `github.com/joho/godotenv`: For environment variable management.
-- `go.mongodb.org/mongo-driver`: MongoDB driver.
-- `golang.org/x/crypto/bcrypt`: For password hashing.
+The application uses the following npm packages (check `package.json` for exact versions):
+- `react`: JavaScript library for building user interfaces.
+- `react-dom`: Entry point for React to the DOM.
+- `typescript`: TypeScript for type safety.
+- `vite`: Build tool for fast development and production builds.
+- `@radix-ui/*`: Core of shadcn-ui components.
+- `tailwindcss`: Utility-first CSS framework.
+- `axios` or `fetch`: For API requests (assumed, adjust based on your project).
 
 Install dependencies:
 ```bash
-go mod tidy
+npm install
 ```
 
 ## Contributing
@@ -212,7 +140,7 @@ Contributions are welcome! To contribute:
 4. Push to the branch (`git push origin feature/your-feature`).
 5. Open a pull request.
 
-Please ensure your code follows Go best practices and includes tests.
+Please ensure your code follows TypeScript and React best practices and includes tests where applicable.
 
 ## License
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
