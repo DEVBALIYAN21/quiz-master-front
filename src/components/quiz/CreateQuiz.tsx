@@ -169,7 +169,7 @@ const CreateQuiz: React.FC = () => {
       <div className="flex items-center justify-between mb-6">
         <Button 
           variant="ghost" 
-          onClick={() => navigate("/dashboard")}
+          onClick={() => navigate("/")}
           className="flex items-center gap-2"
         >
           <ArrowLeft size={16} />
@@ -509,7 +509,7 @@ const CreateQuiz: React.FC = () => {
               <Button 
                 type="button" 
                 variant="outline" 
-                onClick={() => navigate("/dashboard")}
+                onClick={() => navigate("/")}
               >
                 Cancel
               </Button>

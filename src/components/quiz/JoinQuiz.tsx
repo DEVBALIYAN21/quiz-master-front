@@ -99,7 +99,7 @@ const JoinQuiz: React.FC = () => {
           </Form>
         </CardContent>
         <CardFooter className="flex justify-center">
-          <Button variant="link" onClick={() => navigate("/dashboard")}>
+          <Button variant="link" onClick={() => navigate("/")}>
             Back to Dashboard
           </Button>
         </CardFooter>

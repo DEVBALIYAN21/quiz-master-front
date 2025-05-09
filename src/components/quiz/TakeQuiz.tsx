@@ -42,7 +42,7 @@ const TakeQuiz: React.FC = () => {
         toast.error("Failed to load quiz", {
           description: error instanceof Error ? error.message : "An unknown error occurred",
         });
-        navigate("/dashboard");
+        navigate("/");
       } finally {
         setIsLoading(false);
       }
