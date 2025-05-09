@@ -46,7 +46,7 @@ const QuizResult: React.FC = () => {
       }
     } else {
       toast.error("No quiz results found");
-      navigate("/dashboard");
+      navigate("/");
     }
   }, [quizCode, navigate]);
   
