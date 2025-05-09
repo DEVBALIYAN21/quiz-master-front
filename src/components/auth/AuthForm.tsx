@@ -62,7 +62,7 @@ const AuthForm: React.FC = () => {
     setIsSubmitting(true);
     try {
       await login(data.email, data.password);
-      navigate("/dashboard");
+      navigate("/");
     } catch (error) {
       console.error("Login error:", error);
     } finally {
@@ -74,7 +74,7 @@ const AuthForm: React.FC = () => {
     setIsSubmitting(true);
     try {
       await register(data.username, data.email, data.password);
-      navigate("/dashboard");
+      navigate("/");
     } catch (error) {
       console.error("Registration error:", error);
     } finally {
