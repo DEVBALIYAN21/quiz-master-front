@@ -14,7 +14,9 @@ import {
 } from "@/types";
 
 // Base API URL - should be configured via environment variable in production
-const API_BASE_URL = "http://localhost:8056";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+
+
 
 // Helper function to handle API responses
 async function handleResponse<T>(response: Response): Promise<T> {

@@ -1,14 +1,20 @@
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/context/AuthContext";
 import { userAPI } from "@/services/api";
-import { UserStats } from "@/types";
+import { UserStats, QuizWithQuestions } from "@/types";
+import { 
+  PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
+  Tooltip, ResponsiveContainer, LineChart, Line, Legend 
+} from "recharts";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Book, Award, GraduationCap, Users, Clock, Target } from "lucide-react";
+import { Book, BarChart as BarChartIcon, UserRound, Award, GraduationCap, Settings, Users, Clock, Target } from "lucide-react";
+
+const COLORS = ["#6366F1", "#14B8A6", "#EC4899", "#F59E0B", "#10B981"];
 
 const UserProfile: React.FC = () => {
   const { user } = useAuth();
@@ -18,11 +24,9 @@ const UserProfile: React.FC = () => {
   const [createdQuizzes, setCreatedQuizzes] = useState<any[]>([]);
   const [attemptedQuizzes, setAttemptedQuizzes] = useState<any[]>([]);
   const [quizDetails, setQuizDetails] = useState<any>(null);
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
-
   
   useEffect(() => {
-    const fetchUserData = async () => {
+    const fetchUserStats = async () => {
       if (!user) return;
       
       try {
@@ -31,7 +35,7 @@ const UserProfile: React.FC = () => {
         setStats(userStats);
         
         // Fetch created quizzes
-        const createdResponse = await fetch(`${API_BASE_URL}/users/quizzes`, {
+        const createdResponse = await fetch(`http://localhost:8056/users/quizzes`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
@@ -40,7 +44,7 @@ const UserProfile: React.FC = () => {
         setCreatedQuizzes(createdData.quizzes || []);
         
         // Fetch attempted quizzes
-        const attemptedResponse = await fetch(`${API_BASE_URL}/users/attempted-quizzes`, {
+        const attemptedResponse = await fetch(`http://localhost:8056/users/attempted-quizzes`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
@@ -48,18 +52,18 @@ const UserProfile: React.FC = () => {
         const attemptedData = await attemptedResponse.json();
         setAttemptedQuizzes(attemptedData.quizzes || []);
       } catch (error) {
-        console.error("Failed to load user data:", error);
+        console.error("Failed to load user stats:", error);
       } finally {
         setIsLoading(false);
       }
     };
     
-    fetchUserData();
+    fetchUserStats();
   }, [user]);
 
   const handleQuizClick = async (quizCode: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/quizzes/${quizCode}/details`, {
+      const response = await fetch(`http://localhost:8056/quizzes/${quizCode}/details`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
@@ -81,6 +85,21 @@ const UserProfile: React.FC = () => {
       </div>
     );
   }
+  
+  const categoryData = Object.entries(stats.categoryBreakdown || {}).map(([name, value]) => ({
+    name,
+    value
+  }));
+  
+  const scoreData = Object.entries(stats.scoreDistribution || {}).map(([range, count]) => ({
+    range,
+    count
+  }));
+  
+  const recentResultsData = (stats.recentResults || []).map((result, index) => ({
+    name: `Quiz ${index + 1}`,
+    score: result.percentage
+  })).slice(-10);
   
   return (
     <div className="container max-w-6xl mx-auto py-6 px-4">
@@ -136,14 +155,14 @@ const UserProfile: React.FC = () => {
               value={`${stats.averageScore.toFixed(1)}`} 
               description="Overall performance"
               color="bg-amber-50 text-amber-700 border-amber-200"
-              icon={<Book className="h-4 w-4" />}
+              icon={<BarChartIcon className="h-4 w-4" />}
             />
           </div>
         </CardContent>
       </Card>
       
       <Tabs defaultValue="created" className="mb-8">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="created" className="flex gap-2">
             <GraduationCap className="h-4 w-4" />
             Created Quizzes
@@ -152,7 +171,118 @@ const UserProfile: React.FC = () => {
             <Book className="h-4 w-4" />
             Attempted Quizzes
           </TabsTrigger>
+          
         </TabsList>
+        
+        <TabsContent value="statistics" className="pt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Quiz Categories</CardTitle>
+                <CardDescription>Distribution of quizzes by category</CardDescription>
+              </CardHeader>
+              <CardContent className="h-72">
+                {categoryData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={categoryData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      >
+                        {categoryData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-500">
+                    No category data available
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Score Distribution</CardTitle>
+                <CardDescription>How your scores are distributed</CardDescription>
+              </CardHeader>
+              <CardContent className="h-72">
+                {scoreData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={scoreData}
+                      margin={{
+                        top: 5,
+                        right: 30,
+                        left: 20,
+                        bottom: 5,
+                      }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="range" />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="count" fill="#6366F1" name="Quizzes" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-500">
+                    No score data available
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            
+            <Card className="md:col-span-2">
+              <CardHeader>
+                <CardTitle className="text-lg">Performance Trend</CardTitle>
+                <CardDescription>Your recent quiz results</CardDescription>
+              </CardHeader>
+              <CardContent className="h-72">
+                {recentResultsData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={recentResultsData}
+                      margin={{
+                        top: 5,
+                        right: 30,
+                        left: 20,
+                        bottom: 5,
+                      }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis domain={[0, 100]} />
+                      <Tooltip />
+                      <Legend />
+                      <Line
+                        type="monotone"
+                        dataKey="score"
+                        stroke="#6366F1"
+                        activeDot={{ r: 8 }}
+                        name="Score (%)"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-500">
+                    No performance data available
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
 
         <TabsContent value="created" className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -371,6 +501,52 @@ const UserProfile: React.FC = () => {
               })
             )}
           </div>
+        </TabsContent>
+        
+        <TabsContent value="history" className="pt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Recent Quizzes</CardTitle>
+              <CardDescription>Your quiz history</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {!stats.recentResults || stats.recentResults.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <p>You haven't taken any quizzes yet</p>
+                  <Button variant="link" className="mt-2">
+                    Join a Quiz
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {stats.recentResults.map((result, index) => {
+                    const matchingQuiz = stats.recentQuizzes?.find(q => q.id === result.quizId);
+                    return (
+                      <div key={index} className="flex items-center justify-between border-b pb-4 last:border-0">
+                        <div>
+                          <h3 className="font-medium">
+                            {matchingQuiz?.title || "Unknown Quiz"}
+                          </h3>
+                          <p className="text-sm text-gray-500">
+                            {result.submittedAt ? new Date(result.submittedAt).toLocaleDateString() : "N/A"}
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            {matchingQuiz?.category || "Uncategorized"} · {matchingQuiz?.difficulty || "Unknown"} difficulty
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold text-lg">{result.percentage}%</p>
+                          <p className="text-sm">
+                            Score: {result.score}/{result.totalScore}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
